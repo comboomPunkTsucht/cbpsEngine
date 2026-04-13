@@ -1,6 +1,7 @@
 package app.comboomPunkTsucht.CBPSEngine.input;
 
 import app.comboomPunkTsucht.CBPSEngine.graphics.*;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Input handler: processes window events and updates input state.
@@ -9,10 +10,18 @@ import app.comboomPunkTsucht.CBPSEngine.graphics.*;
 public class InputHandler {
     private final KeyboardInput keyboard;
     private final MouseInput mouse;
+    private long glfwWindow = 0;
 
     public InputHandler() {
         this.keyboard = new KeyboardInput();
         this.mouse = new MouseInput();
+    }
+
+    /**
+     * Set the GLFW window handle for polling mouse position.
+     */
+    public void setGlfwWindow(long window) {
+        this.glfwWindow = window;
     }
 
     /**
@@ -37,7 +46,7 @@ public class InputHandler {
 
     private void handleMouseEvent(MouseEvent event) {
         mouse.setPosition(event.x(), event.y());
-        
+
         // If button != -1, it's a button event
         if (event.button() != -1) {
             if (event.action() == 1) { // PRESS
@@ -50,10 +59,19 @@ public class InputHandler {
 
     /**
      * Update input frame state (should be called once per frame).
+     * Also polls mouse position directly from GLFW.
      */
     public void updateFrame() {
         keyboard.updateFrame();
         mouse.updateFrame();
+
+        // Poll mouse position directly if window is set
+        if (glfwWindow != 0) {
+            double[] x = new double[1];
+            double[] y = new double[1];
+            GLFW.glfwGetCursorPos(glfwWindow, x, y);
+            mouse.setPosition(x[0], y[0]);
+        }
     }
 
     /**

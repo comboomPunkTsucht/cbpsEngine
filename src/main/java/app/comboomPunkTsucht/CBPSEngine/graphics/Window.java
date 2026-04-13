@@ -146,6 +146,18 @@ public class Window {
     }
 
     /**
+     * Clear background with RGBA color (Raylib-style wrapper).
+     * Calls glClearColor + glClear internally.
+     */
+    public void clearBackground(float r, float g, float b, float a) {
+        org.lwjgl.opengl.GL11.glClearColor(r, g, b, a);
+        org.lwjgl.opengl.GL11.glClear(
+            org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT |
+            org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
+        );
+    }
+
+    /**
      * Check if window should close (user clicked close button or shutdown requested).
      */
     public boolean shouldClose() {

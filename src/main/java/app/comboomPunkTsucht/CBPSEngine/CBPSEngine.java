@@ -1,18 +1,27 @@
 package app.comboomPunkTsucht.CBPSEngine;
 
 import app.comboomPunkTsucht.CBPSEngine.core.GameLoop;
-import app.comboomPunkTsucht.CBPSEngine.ecs.World;
 import app.comboomPunkTsucht.CBPSEngine.graphics.Window;
 import app.comboomPunkTsucht.CBPSEngine.input.InputHandler;
 
 /**
  * Main facade for the CBPS Engine.
  * Provides static API for window management, game loop, and core functionality.
+ *
+ * Architecture:
+ * - Window: GLFW context management
+ * - GameLoop: Fixed timestep 60 Hz for physics, variable rendering
+ * - InputHandler: Event queue polling and state tracking
+ *
+ * Event Flow:
+ * 1. CBPSEngine.run() starts game loop
+ * 2. Each frame: window.update() → pollEvent() → InputHandler.processEvent()
+ * 3. Fixed 60 Hz: fixedUpdateCallback() → game logic
+ * 4. Variable FPS: renderCallback(alpha) → graphics with interpolation
  */
 public final class CBPSEngine {
     private static volatile GameLoop gameLoop;
     private static volatile Window window;
-    private static volatile World ecsWorld;
     private static volatile InputHandler inputHandler;
     private static final double DEFAULT_TARGET_FPS = 60.0;
     private static final boolean DEFAULT_FPS_CAPPED = true;
@@ -26,11 +35,12 @@ public final class CBPSEngine {
         if (gameLoop == null) {
             gameLoop = new GameLoop(window, DEFAULT_TARGET_FPS, DEFAULT_FPS_CAPPED);
         }
-        if (ecsWorld == null) {
-            ecsWorld = new World();
-        }
         if (inputHandler == null) {
             inputHandler = new InputHandler();
+            // Set GLFW window handle for mouse polling
+            if (window != null) {
+                inputHandler.setGlfwWindow(window.getGlfwWindowHandle());
+            }
         }
     }
 
@@ -38,10 +48,14 @@ public final class CBPSEngine {
         return window != null && window.shouldClose();
     }
 
-    public static void setUpdateCallback(Runnable callback) {
+    /**
+     * Set fixed update callback for game logic (runs at fixed 60 Hz).
+     * Input handling is automatic (happens before this callback).
+     */
+    public static void setFixedUpdateCallback(GameLoop.FixedUpdateCallback callback) {
         if (gameLoop != null) {
-            gameLoop.setUpdateCallback(() -> {
-                // Process input events first
+            gameLoop.setFixedUpdateCallback(timeStep -> {
+                // Always process input events first (before user logic)
                 if (inputHandler != null && window != null) {
                     app.comboomPunkTsucht.CBPSEngine.graphics.WindowEvent event;
                     while ((event = window.pollEvent()) != null) {
@@ -50,21 +64,22 @@ public final class CBPSEngine {
                     inputHandler.updateFrame();
                 }
 
-                // Process ECS systems
-                if (ecsWorld != null) {
-                    ecsWorld.process(getDeltaTime());
-                }
-
-                // Then call user logic
+                // Call user fixed update logic
                 if (callback != null) {
-                    callback.run();
+                    callback.update(timeStep);
                 }
             });
         }
     }
 
-    public static void setRenderCallback(Runnable callback) {
-        if (gameLoop != null) gameLoop.setRenderCallback(callback);
+    /**
+     * Set render callback with interpolation factor (variable FPS).
+     * Alpha: 0.0 = start of fixed frame, 1.0 = end of fixed frame
+     */
+    public static void setRenderCallback(GameLoop.RenderCallback callback) {
+        if (gameLoop != null) {
+            gameLoop.setRenderCallback(callback);
+        }
     }
 
     public static void run() {
@@ -74,10 +89,28 @@ public final class CBPSEngine {
         }
     }
 
+    /**
+     * Shutdown engine and clean up all resources.
+     * Sets all static variables to null for re-initialization.
+     */
     public static void shutdown() {
         if (gameLoop != null) gameLoop.shutdown();
-        if (ecsWorld != null) ecsWorld.cleanup();
         if (window != null) window.cleanup();
+
+        // Clean shutdown: set all statics to null
+        gameLoop = null;
+        window = null;
+        inputHandler = null;
+    }
+
+    /**
+     * Clear background with RGBA color.
+     * Wrapper for glClearColor + glClear.
+     */
+    public static void clearBackground(float r, float g, float b, float a) {
+        if (window != null) {
+            window.clearBackground(r, g, b, a);
+        }
     }
 
     public static float getDeltaTime() {
@@ -90,6 +123,10 @@ public final class CBPSEngine {
 
     public static double getElapsedTime() {
         return gameLoop != null ? gameLoop.getElapsedTime() : 0.0;
+    }
+
+    public static double getFixedTimeStep() {
+        return gameLoop != null ? gameLoop.getFixedTimeStep() : 0.0;
     }
 
     public static void beginFrame() {
@@ -108,11 +145,8 @@ public final class CBPSEngine {
         return window;
     }
 
-    public static World getECSWorld() {
-        return ecsWorld;
-    }
-
     public static InputHandler getInputHandler() {
         return inputHandler;
     }
 }
+

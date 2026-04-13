@@ -20,13 +20,13 @@ public class SimpleWindowTest {
         // Initialize engine with a window
         CBPSEngine.initWindow(1280, 720, "SimpleWindowTest - CBPS Engine");
 
-        // Set update callback (game logic)
-        CBPSEngine.setUpdateCallback(() -> {
-            // Game logic runs here ~60 times per second
+        // Set fixed update callback (game logic at fixed 60 Hz)
+        CBPSEngine.setFixedUpdateCallback(timeStep -> {
+            // Game logic runs here at fixed 60 Hz timestep
         });
 
-        // Set render callback (graphics)
-        CBPSEngine.setRenderCallback(() -> {
+        // Set render callback (graphics with interpolation alpha)
+        CBPSEngine.setRenderCallback(alpha -> {
             // Clear screen to black
             GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);

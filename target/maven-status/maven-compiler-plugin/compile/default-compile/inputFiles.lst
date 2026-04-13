@@ -13,12 +13,10 @@
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/graphics/KeyEvent.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/graphics/ViewportConfig.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/logging/EngineLogger.java
-/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/ecs/World.java
-/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/ecs/component/Transform.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/test/SimpleWindowTest.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/graphics/GLFWEventDispatcher.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/Engine.java
-/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/ecs/component/Velocity.java
+/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/graphics/SimpleShaderRenderer.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/exception/EngineException.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/input/InputHandler.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/graphics/WindowResizeEvent.java
@@ -26,6 +24,6 @@
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/EngineState.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/graphics/WindowCloseEvent.java
 /Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/core/MessageQueue.java
-/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/ecs/component/Renderer.java
-/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/ecs/system/RenderingSystem.java
-/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/ecs/system/PhysicsSystem.java
+/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/example/ExampleLauncher.java
+/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/core/PlayerInput.java
+/Users/mahd/DEV/cbpsEngine/src/main/java/app/comboomPunkTsucht/CBPSEngine/core/Player.java

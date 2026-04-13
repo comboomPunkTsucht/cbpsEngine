@@ -3,21 +3,27 @@ package app.comboomPunkTsucht.CBPSEngine.core;
 import app.comboomPunkTsucht.CBPSEngine.exception.EngineException;
 import app.comboomPunkTsucht.CBPSEngine.graphics.FrameTimeCalculator;
 import app.comboomPunkTsucht.CBPSEngine.graphics.Window;
-import app.comboomPunkTsucht.CBPSEngine.graphics.WindowEvent;
 
 /**
- * Main game loop engine.
+ * Main game loop engine with Fixed Time Step (Accumulator Pattern).
  *
- * Loop Structure:
- * 1. Update frame timing
- * 2. Poll window events
- * 3. Execute update callback (game logic)
- * 4. Execute render callback (graphics)
- * 5. Swap buffers and present frame
- * 6. Check shutdown conditions
+ * Architecture:
+ * - Variable rendering: Frame rate adapts to hardware
+ * - Fixed physics: ECS/physics runs at fixed 60 Hz timestep
+ * - Interpolation: Render callback receives 'alpha' for smooth animation
+ *
+ * Loop Structure (per frame):
+ * 1. Poll window events (non-blocking)
+ * 2. Accumulate deltaTime
+ * 3. While accumulator >= fixedTimeStep:
+ *    - Execute fixedUpdateCallback(timeStep) → ECS, physics
+ *    - Drain accumulator
+ * 4. Calculate interpolation factor alpha = accumulator / fixedTimeStep
+ * 5. Execute renderCallback(alpha) → graphics with interpolation
+ * 6. Swap buffers
  *
  * Thread-Safety:
- * - isRunning: volatile flag for graceful shutdown signaling
+ * - isRunning: volatile flag for graceful shutdown
  * - pauseRequested: volatile flag for pause/unpause
  * - Window is thread-local after initialization
  */
@@ -28,22 +34,43 @@ public class GameLoop {
     private volatile boolean isRunning;
     private volatile boolean pauseRequested;
 
-    private Runnable updateCallback;
-    private Runnable renderCallback;
+    private final double fixedTimeStep;     // 1.0 / 60.0 = 0.01667 seconds
+    private double accumulator;              // Accumulates deltaTime
+
+    private FixedUpdateCallback fixedUpdateCallback;
+    private RenderCallback renderCallback;
+
+    /**
+     * Callback interface for fixed timestep updates (physics, ECS).
+     */
+    @FunctionalInterface
+    public interface FixedUpdateCallback {
+        void update(float timeStep);
+    }
+
+    /**
+     * Callback interface for rendering with interpolation factor.
+     */
+    @FunctionalInterface
+    public interface RenderCallback {
+        void render(float alpha);
+    }
 
     /**
      * Create a game loop for the given window.
      *
      * @param window The GLFW window
-     * @param targetFPS Target frames per second
-     * @param fpsCapped Whether to cap FPS at target
+     * @param targetFPS Target frames per second for rendering (uncapped variable rate)
+     * @param fpsCapped Whether to cap output FPS
      */
     public GameLoop(Window window, double targetFPS, boolean fpsCapped) {
         this.window = window;
         this.frameTimer = new FrameTimeCalculator(targetFPS, fpsCapped);
+        this.fixedTimeStep = 1.0 / 60.0;  // 60 Hz fixed timestep
+        this.accumulator = 0.0;
         this.isRunning = false;
         this.pauseRequested = false;
-        this.updateCallback = null;
+        this.fixedUpdateCallback = null;
         this.renderCallback = null;
     }
 
@@ -54,21 +81,16 @@ public class GameLoop {
     public void start() {
         isRunning = true;
         pauseRequested = false;
+        accumulator = 0.0;
         frameTimer.reset();
         frameTimer.update(); // Prime the frame timer
     }
 
     /**
-     * Run the main game loop (blocking).
-     * Continues until {@link #shutdown()} is called or window closes.
+     * Run the main game loop (blocking) with fixed time step accumulator.
      *
-     * Frame Iteration:
-     * - setActive() → ensure GL context is current
-     * - update() → calculate frame timing
-     * - window.update() → poll events
-     * - updateCallback() → game logic (if not paused)
-     * - renderCallback() → render frame
-     * - swapBuffers() → present frame
+     * Continues until {@link #shutdown()} is called or window closes.
+     * Decouples variable rendering from fixed physics simulation.
      */
     public void run() {
         if (!isRunning) {
@@ -79,27 +101,36 @@ public class GameLoop {
             // Ensure GL context is current for this thread
             window.setActive();
 
-            // Update frame timing
+            // Update frame timing (variable deltaTime)
             frameTimer.update();
+            double deltaTime = Math.min(frameTimer.getDeltaTime(), 0.25); // Max 250ms per frame
 
-            // Poll window events (non-blocking)
+            // Accumulate time for fixed timestep
+            accumulator += deltaTime;
+
+            // Poll window events (non-blocking) → handled by CBPSEngine
             window.update();
-            processEvents();
 
-            // Execute update callback (game logic)
-            if (!pauseRequested && updateCallback != null) {
-                try {
-                    updateCallback.run();
-                } catch (Exception e) {
-                    System.err.println("[GameLoop] Error in update callback: " + e.getMessage());
-                    e.printStackTrace();
+            // Fixed timestep loop: run physics/ECS at fixed rate
+            while (accumulator >= fixedTimeStep && !pauseRequested) {
+                if (fixedUpdateCallback != null) {
+                    try {
+                        fixedUpdateCallback.update((float) fixedTimeStep);
+                    } catch (Exception e) {
+                        System.err.println("[GameLoop] Error in fixed update callback: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
+                accumulator -= fixedTimeStep;
             }
 
-            // Execute render callback (graphics)
+            // Calculate interpolation factor for smooth rendering
+            float alpha = (float) (accumulator / fixedTimeStep);
+
+            // Render frame with interpolation
             if (renderCallback != null) {
                 try {
-                    renderCallback.run();
+                    renderCallback.render(alpha);
                 } catch (Exception e) {
                     System.err.println("[GameLoop] Error in render callback: " + e.getMessage());
                     e.printStackTrace();
@@ -117,18 +148,6 @@ public class GameLoop {
     }
 
     /**
-     * Process pending window events (input, resize, etc.).
-     * Called every frame to drain the event queue.
-     */
-    private void processEvents() {
-        WindowEvent event;
-        while ((event = window.pollEvent()) != null) {
-            // Events are queued, could do further processing here
-            // For now, just drain the queue (callbacks were already called)
-        }
-    }
-
-    /**
      * Request shutdown. Loop will exit after current frame.
      * Non-blocking - sets flag for graceful shutdown.
      */
@@ -140,7 +159,7 @@ public class GameLoop {
     }
 
     /**
-     * Pause game logic (updates), keep rendering.
+     * Pause game logic (fixed updates), keep rendering.
      * Useful for pause screens, menus, debug pause.
      */
     public void pause() {
@@ -169,16 +188,18 @@ public class GameLoop {
     }
 
     /**
-     * Register callback for game logic update phase.
+     * Register callback for fixed timestep updates (physics, ECS).
+     * Called at fixed 60 Hz regardless of frame rate.
      */
-    public void setUpdateCallback(Runnable callback) {
-        this.updateCallback = callback;
+    public void setFixedUpdateCallback(FixedUpdateCallback callback) {
+        this.fixedUpdateCallback = callback;
     }
 
     /**
-     * Register callback for render phase.
+     * Register callback for render phase with interpolation factor.
+     * Alpha: 0.0 = start of fixed frame, 1.0 = end of fixed frame
      */
-    public void setRenderCallback(Runnable callback) {
+    public void setRenderCallback(RenderCallback callback) {
         this.renderCallback = callback;
     }
 
@@ -201,6 +222,13 @@ public class GameLoop {
      */
     public double getElapsedTime() {
         return frameTimer.getElapsedTime();
+    }
+
+    /**
+     * Get the fixed timestep used for physics/ECS (60 Hz).
+     */
+    public double getFixedTimeStep() {
+        return fixedTimeStep;
     }
 
     /**
