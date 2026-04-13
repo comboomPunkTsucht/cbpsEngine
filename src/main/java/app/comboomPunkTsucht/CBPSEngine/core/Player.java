@@ -10,9 +10,9 @@ import org.joml.Vector3f;
 public class Player {
     // Position and rotation
     public Vector3f position = new Vector3f(0, 1.5f, 5);
-    public float yaw = 0;      // Left/right rotation (Y axis)
-    public float pitch = 0;    // Up/down rotation (X axis) - clamped to -89..89
-    public float roll = 0;     // Tilt (Z axis)
+    public float yaw = 0;        // Left/right rotation (Y axis)
+    public float pitch = -17.0f; // Up/down rotation (X axis) - negative = look down
+    public float roll = 0;       // Tilt (Z axis)
 
     // Movement
     private float moveSpeed = 5.0f;
