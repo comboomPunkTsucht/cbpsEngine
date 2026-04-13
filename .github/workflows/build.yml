@@ -67,9 +67,3 @@ jobs:
 
       - name: Build JAR Artifact
         run: mvn -B clean package -DskipTests
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cbps-engine-build
-          path: target/CBPSEngine-full.jar
