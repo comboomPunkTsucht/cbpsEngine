@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+gradle/
+*.gradle.kts~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.classpath
+*.project
+*.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Mods (user-provided, not tracked)
+mods/
+
+# Java
+*.class
+*.jar
+*.zip
+*.tar.gz
+
+# Runtime
+.env
+local.properties
