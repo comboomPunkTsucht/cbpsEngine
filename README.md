@@ -179,6 +179,14 @@ Tests cover:
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for code style and contribution guidelines.
 
+## Contributors
+
+**Built with assistance from:**
+- **Claude** (Anthropic) – Architecture, core implementation, documentation
+- **Gemini** (Google) – Code review, optimization, architectural feedback
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) for the full list.
+
 ## License
 
 MIT License (2026) – comboom.sucht
