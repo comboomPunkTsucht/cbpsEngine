@@ -1,36 +1,58 @@
-# Gradle
-.gradle/
-build/
-gradle/
-*.gradle.kts~
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
 
 # IDE
 .idea/
 .vscode/
+.project
+.classpath
+.settings/
 *.iml
 *.iws
 *.ipr
-*.classpath
-*.project
-*.settings/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
 
 # OS
 .DS_Store
 Thumbs.db
+.AppleDouble
+.LSOverride
 
 # Logs
 logs/
 *.log
+*.log.*
+
+# User-specific
+.env
+local.properties
+*.local
+
+# Build artifacts
+*.jar
+*.zip
+*.tar.gz
+*.class
+*.jar.asc
+
+# Workspace settings
+cbpsEngine.code-workspace
 
 # Mods (user-provided, not tracked)
 mods/
 
-# Java
-*.class
-*.jar
-*.zip
-*.tar.gz
-
-# Runtime
-.env
-local.properties
+# Generated
+dependency-reduced-pom.xml
+.classpath
+.project
+.settings/
